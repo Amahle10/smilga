@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQL CRUD Operations</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f4f9; color: #333; }
+        .box { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .row-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        button { margin-left: 5px; padding: 5px 10px; cursor: pointer; border-radius: 4px; border: none; }
+        .btn-add { background-color: #28a745; color: white; }
+        .btn-edit { background-color: #ffc107; color: black; }
+        .btn-delete { background-color: #dc3545; color: white; }
+        input[type="text"] { padding: 6px; width: 250px; border-radius: 4px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+
+    <h1>Frontend Database Controller</h1>
+
+    <!-- Root Server Health Check Box -->
+    <div class="box">
+        <h3>Server Status Check (/)</h3>
+        <button onclick="checkServerHealth()">Ping Root URL</button>
+        <p id="health-status" style="font-weight: bold; color: #555;"></p>
+    </div>
+
+    <!-- Create Operations Box -->
+    <div class="box">
+        <h3>Add New Message (POST)</h3>
+        <input type="text" id="new-message-input" placeholder="Enter text content here...">
+        <button class="btn-add" onclick="createMessage()">Submit to MySQL</button>
+    </div>
+
+    <!-- Read, Update, Delete Box -->
+    <div class="box">
+        <h3>Live Database Rows (/messages)</h3>
+        <button style="background-color: #007bff; color: white;" onclick="readMessages()">Refresh List</button>
+        <div id="database-list"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

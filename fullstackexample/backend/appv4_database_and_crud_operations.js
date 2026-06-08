@@ -4,7 +4,7 @@ const mysql = require('mysql2');
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: 'YOUR_WORKBENCH_PASSWORD', // <-- Insert your Workbench root password
+    password: 'password', // <-- Insert your Workbench root password
     database: 'my_server_db',
     port: 3306,
     waitForConnections: true,
@@ -31,13 +31,22 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    // FIX: Properly split the URL path to isolate the numeric ID
     const urlParts = req.url.split('/'); 
     const isMessageRoute = urlParts[1] === 'messages';
-    const id = urlParts[2]; // Extracts '1' from '/messages/1'
+    const id = urlParts[2]; 
 
     try {
-        // 1. READ ALL (GET /messages)
+        // --- ADDED: Normal Base Return for the root path (GET /) ---
+        if (req.method === 'GET' && req.url === '/') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ 
+                message: 'Server is healthy and running online!', 
+                endpoints: { base: '/', database_crud: '/messages' } 
+            }));
+            return;
+        }
+
+        // --- 1. READ ALL (GET /messages) ---
         if (req.method === 'GET' && req.url === '/messages') {
             pool.query('SELECT * FROM messages', (err, results) => {
                 if (err) throw err;
@@ -46,7 +55,7 @@ const server = http.createServer(async (req, res) => {
             });
         }
 
-        // 2. WRITE/CREATE (POST /messages)
+        // --- 2. WRITE/CREATE (POST /messages) ---
         else if (req.method === 'POST' && req.url === '/messages') {
             const body = await getRequestBody(req);
             pool.query('INSERT INTO messages (text_content) VALUES (?)', [body.text_content], (err, result) => {
@@ -56,7 +65,7 @@ const server = http.createServer(async (req, res) => {
             });
         }
 
-        // 3. EDIT/UPDATE (PUT /messages/id)
+        // --- 3. EDIT/UPDATE (PUT /messages/id) ---
         else if (req.method === 'PUT' && isMessageRoute && id) {
             const body = await getRequestBody(req);
             pool.query('UPDATE messages SET text_content = ? WHERE id = ?', [body.text_content, id], (err, result) => {
@@ -66,7 +75,7 @@ const server = http.createServer(async (req, res) => {
             });
         }
 
-        // 4. DELETE (DELETE /messages/id)
+        // --- 4. DELETE (DELETE /messages/id) ---
         else if (req.method === 'DELETE' && isMessageRoute && id) {
             pool.query('DELETE FROM messages WHERE id = ?', [id], (err, result) => {
                 if (err) throw err;
@@ -75,7 +84,6 @@ const server = http.createServer(async (req, res) => {
             });
         } 
         
-        // Catch-all fall-through for bad endpoints
         else {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Endpoint route not found' }));
@@ -88,5 +96,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(3000, () => {
-    console.log('CRUD Server listening on http://localhost:3000');
+    console.log('Server online. Root (/) and database (/messages) routes ready.');
 });
