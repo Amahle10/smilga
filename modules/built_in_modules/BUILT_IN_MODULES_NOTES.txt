@@ -1,0 +1,12 @@
+in node we have built in modules 
+
+namely os, fs, http and path
+
+
+path modules are used to communicate os path like '/' like changing a path 
+
+os modules are used to communicate directly with os functionality like for example find out information about os, like
+like available disk, current user and permissions, last boot or last reboot 
+
+
+file sytem modules are sued to communicate files in os like create file, read file, edit file...delete
