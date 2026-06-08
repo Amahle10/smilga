@@ -11,7 +11,6 @@ const pool = mysql.createPool({
     connectionLimit: 10
 });
 
-// Helper function to read data streams sent from the frontend browser
 const getRequestBody = (req) => {
     return new Promise((resolve, reject) => {
         let body = '';
@@ -22,7 +21,6 @@ const getRequestBody = (req) => {
 };
 
 const server = http.createServer(async (req, res) => {
-    // Enable CORS for frontend local development
     res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -33,11 +31,13 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    const urlParams = req.url.split('/');
-    const id = urlParams[2]; // Extracts 'id' from URLs like /messages/5
+    // FIX: Properly split the URL path to isolate the numeric ID
+    const urlParts = req.url.split('/'); 
+    const isMessageRoute = urlParts[1] === 'messages';
+    const id = urlParts[2]; // Extracts '1' from '/messages/1'
 
     try {
-        // --- 1. READ ALL (GET /messages) ---
+        // 1. READ ALL (GET /messages)
         if (req.method === 'GET' && req.url === '/messages') {
             pool.query('SELECT * FROM messages', (err, results) => {
                 if (err) throw err;
@@ -46,7 +46,7 @@ const server = http.createServer(async (req, res) => {
             });
         }
 
-        // --- 2. WRITE/CREATE (POST /messages) ---
+        // 2. WRITE/CREATE (POST /messages)
         else if (req.method === 'POST' && req.url === '/messages') {
             const body = await getRequestBody(req);
             pool.query('INSERT INTO messages (text_content) VALUES (?)', [body.text_content], (err, result) => {
@@ -56,8 +56,8 @@ const server = http.createServer(async (req, res) => {
             });
         }
 
-        // --- 3. EDIT/UPDATE (PUT /messages/id) ---
-        else if (req.method === 'PUT' && req.url.startsWith('/messages/')) {
+        // 3. EDIT/UPDATE (PUT /messages/id)
+        else if (req.method === 'PUT' && isMessageRoute && id) {
             const body = await getRequestBody(req);
             pool.query('UPDATE messages SET text_content = ? WHERE id = ?', [body.text_content, id], (err, result) => {
                 if (err) throw err;
@@ -66,8 +66,8 @@ const server = http.createServer(async (req, res) => {
             });
         }
 
-        // --- 4. DELETE (DELETE /messages/id) ---
-        else if (req.method === 'DELETE' && req.url.startsWith('/messages/')) {
+        // 4. DELETE (DELETE /messages/id)
+        else if (req.method === 'DELETE' && isMessageRoute && id) {
             pool.query('DELETE FROM messages WHERE id = ?', [id], (err, result) => {
                 if (err) throw err;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -75,9 +75,10 @@ const server = http.createServer(async (req, res) => {
             });
         } 
         
+        // Catch-all fall-through for bad endpoints
         else {
-            res.writeHead(404);
-            res.end();
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Endpoint route not found' }));
         }
     } catch (error) {
         console.error(error);
